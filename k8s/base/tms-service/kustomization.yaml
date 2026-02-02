@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: tms-service
+images:
+  - name: tazamaorg/tms-service
+    newTag: 3.0.0

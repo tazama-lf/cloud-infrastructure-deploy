@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: event-sidecar
-  namespace: processor
   labels:
     app: event-sidecar
 spec:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: event-sidecar
-          image: tazamaorg/event-sidecar:2.2.0
+          image: tazamaorg/event-sidecar:3.0.0
           ports:
             - name: http
               containerPort: 5000
@@ -55,8 +54,6 @@ spec:
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
-      imagePullSecrets:
-        - name: frmpullsecret
       schedulerName: default-scheduler
       enableServiceLinks: false
   strategy:

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# Patch to inject ConfigMap and Secret environment variables into deployments
+# Apply this to services that need database and NATS configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # Will be overridden by kustomize
+spec:
+  template:
+    spec:
+      containers:
+        - name: placeholder  # Will match the container name
+          envFrom:
+            - configMapRef:
+                name: tazama-common-config
+            - secretRef:
+                name: tazama-common-secrets

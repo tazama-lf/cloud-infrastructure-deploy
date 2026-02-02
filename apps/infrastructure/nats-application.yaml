@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nats
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: nats
+    repoURL: https://nats-io.github.io/k8s/helm/charts/
+    targetRevision: 1.1.5
+    helm:
+      releaseName: nats
+      values: |
+        nats:
+          jetstream:
+            enabled: true
+            memStorage:
+              enabled: true
+              size: 2Gi
+            fileStorage:
+              enabled: true
+              size: 10Gi
+              storageClassName: ""  # Use default storage class
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+        natsbox:
+          enabled: true
+        promExporter:
+          enabled: true
+          port: 7777
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infrastructure
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

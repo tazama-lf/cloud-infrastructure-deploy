@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: event-sidecar
+images:
+  - name: tazamaorg/event-sidecar
+    newTag: 3.0.0

@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rule-008
-  namespace: processor
   labels:
     app: rule-008
 spec:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: rule-008
-          image: tazamaorg/rule-008:2.2.0
+          image: tazamaorg/rule-008:3.0.0
           ports:
             - name: http
               containerPort: 8080
@@ -55,8 +54,6 @@ spec:
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
-      imagePullSecrets:
-        - name: frmpullsecret
       schedulerName: default-scheduler
       enableServiceLinks: false
   strategy:

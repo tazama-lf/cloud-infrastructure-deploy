@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: event-flow
+images:
+  - name: tazamaorg/event-flow
+    newTag: 3.0.0

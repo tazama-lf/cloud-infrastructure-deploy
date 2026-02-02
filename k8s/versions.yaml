@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Central Version Configuration for Tazama Services
+#
+# This file defines the image versions for all Tazama microservices.
+# Update this single file to change versions across all deployments.
+#
+# Usage: Reference these versions in kustomization.yaml files using
+#        Kustomize's images transformer.
+
+# Main Tazama version for most services
+TAZAMA_VERSION: "3.0.0"
+
+# Special version tags
+DEMO_UI_VERSION: "rc"
+
+# Individual service versions (override if needed)
+# Uncomment and modify to set service-specific versions
+# RULE_001_VERSION: "3.0.1"
+# EVENT_DIRECTOR_VERSION: "3.1.0"
+
+# Infrastructure versions (for ArgoCD-managed Helm charts)
+POSTGRESQL_VERSION: "13.4.0"
+NATS_VERSION: "1.1.5"
+KEYCLOAK_VERSION: "2.3.0"
+NGINX_INGRESS_VERSION: "4.9.0"
+MONITORING_VERSION: "55.5.0"  # kube-prometheus-stack
+ARGOCD_VERSION: "5.51.6"
+SEALED_SECRETS_VERSION: "2.14.2"

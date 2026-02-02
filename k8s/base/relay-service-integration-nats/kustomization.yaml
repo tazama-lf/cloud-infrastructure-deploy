@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: relay-service-integration-nats
+images:
+  - name: tazamaorg/relay-service-integration-nats
+    newTag: 3.0.0

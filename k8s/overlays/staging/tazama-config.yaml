@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Tazama Configuration - Non-Sensitive Values
+# This ConfigMap contains all non-secret configuration for Tazama services
+#
+# Apply this to create the config:
+#   kubectl apply -f k8s/overlays/staging/tazama-config.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tazama-config
+  namespace: staging
+data:
+  # Application Performance Monitoring
+  APMActive: "true"
+  APM_LOGGING: "true"
+
+  # Environment
+  NODE_ENV: "staging"
+  envName: "staging"
+
+  # Logging
+  LOG_LEVEL: "info"
+  FUNCTION_NAME: "tazama-service"
+
+  # Cache Configuration
+  CacheEnabled: "true"
+  CACHE_TTL: "300"
+
+  # PostgreSQL Database URLs (non-sensitive parts)
+  # Configuration Database
+  CONFIGURATION_DB_HOST: "postgres-postgresql.infrastructure.svc.cluster.local"
+  CONFIGURATION_DB_PORT: "5432"
+  CONFIGURATION_DB_NAME: "configuration"
+  CONFIGURATION_DB_URL: "postgres://postgres-postgresql.infrastructure.svc.cluster.local:5432/configuration"
+
+  # Transaction History Database
+  TRANSACTION_HISTORY_DB_HOST: "postgres-postgresql.infrastructure.svc.cluster.local"
+  TRANSACTION_HISTORY_DB_PORT: "5432"
+  TRANSACTION_HISTORY_DB_NAME: "transactionHistory"
+  TRANSACTION_HISTORY_DB_URL: "postgres://postgres-postgresql.infrastructure.svc.cluster.local:5432/transactionHistory"
+
+  # Pseudonyms Database
+  PSEUDONYMS_DB_HOST: "postgres-postgresql.infrastructure.svc.cluster.local"
+  PSEUDONYMS_DB_PORT: "5432"
+  PSEUDONYMS_DB_NAME: "pseudonyms"
+  PSEUDONYMS_DB_URL: "postgres://postgres-postgresql.infrastructure.svc.cluster.local:5432/pseudonyms"
+
+  # Evaluations Database
+  EVALUATIONS_DB_HOST: "postgres-postgresql.infrastructure.svc.cluster.local"
+  EVALUATIONS_DB_PORT: "5432"
+  EVALUATIONS_DB_NAME: "evaluations"
+
+  # Database Connection Pool Settings
+  DB_POOL_SIZE: "100"
+  DB_IDLE_TIMEOUT: "10000"
+  DB_CONNECTION_TIMEOUT: "2000"
+
+  # NATS Configuration
+  NATS_SERVER_URL: "nats://nats.infrastructure.svc.cluster.local:4222"
+  STARTUP_TYPE: "nats"
+  SERVER_URL: "nats://nats.infrastructure.svc.cluster.local:4222"
+
+  # NATS Streams Configuration
+  PRODUCER_STREAM: "TazamaProducer"
+  CONSUMER_STREAM: "TazamaConsumer"
+  STREAM_SUBJECT: "tazama.*"
+  ACK_POLICY: "Explicit"
+
+  # Elasticsearch Configuration
+  ELASTIC_HOST: "http://elasticsearch-master.infrastructure.svc:9200"
+  ELASTICSEARCH_URL: "http://elasticsearch-master.infrastructure.svc:9200"
+  ELASTIC_INDEX: "tazama-logs"
+
+  # Redis Configuration (if used)
+  REDIS_HOST: "redis-master.infrastructure.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # Service Discovery - Internal Service URLs
+  EVENT_DIRECTOR_URL: "http://event-director.staging.svc.cluster.local:8080"
+  TYPOLOGY_PROCESSOR_URL: "http://typology-processor.staging.svc.cluster.local:8080"
+  TRANSACTION_AGGREGATION_URL: "http://tadp.staging.svc.cluster.local:8080"
+  TMS_SERVICE_URL: "http://tms-service.staging.svc.cluster.local:8080"
+
+  # Feature Flags
+  SUPPRESS_ALERTS: "false"
+  MAX_CPU: "4"
+
+  # Timeouts (milliseconds)
+  REQUEST_TIMEOUT: "30000"
+  RESPONSE_TIMEOUT: "30000"

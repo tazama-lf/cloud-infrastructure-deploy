@@ -3,7 +3,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rule-045
-  namespace: processor
 spec:
   ports:
     - name: http

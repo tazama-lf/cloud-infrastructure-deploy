@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: rule-020
+images:
+  - name: tazamaorg/rule-020
+    newTag: 3.0.0

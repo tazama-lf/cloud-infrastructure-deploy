@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+# Common resource limits and requests for all Tazama services
+# Apply this patch to add reasonable resource constraints
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # Will be overridden by kustomize
+spec:
+  template:
+    spec:
+      containers:
+        - name: placeholder  # Will match the container name
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

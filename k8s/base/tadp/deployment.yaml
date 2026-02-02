@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: transaction-aggregation-decisioning-processor
-  namespace: processor
   labels:
     app: transaction-aggregation-decisioning-processor
 spec:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: transaction-aggregation-decisioning-processor
-          image: tazamaorg/transaction-aggregation-decisioning-processor:2.2.0
+          image: tazamaorg/transaction-aggregation-decisioning-processor:3.0.0
           ports:
             - name: http
               containerPort: 8080
@@ -55,8 +54,6 @@ spec:
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
-      imagePullSecrets:
-        - name: frmpullsecret
       schedulerName: default-scheduler
       enableServiceLinks: false
   strategy:

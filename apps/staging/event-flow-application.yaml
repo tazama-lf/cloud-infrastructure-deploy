@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/cloud-infrastructure-deploy'
+    repoURL: 'https://github.com/tazama-lf/cloud-infrastructure-deploy'
     targetRevision: main
     path: k8s/overlays/staging/event-flow
     # Since kustomize is inferred by path ending in kustomization, no explicit kustomize block needed

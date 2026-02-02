@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: postgresql
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: 13.4.0
+    helm:
+      releaseName: postgres
+      values: |
+        auth:
+          enablePostgresUser: true
+          postgresPassword: admin123  # TODO: Replace with sealed secret
+          username: tazama
+          password: tazama123  # TODO: Replace with sealed secret
+          database: tazama
+        primary:
+          persistence:
+            enabled: true
+            size: 20Gi
+            storageClass: ""  # Use default storage class
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infrastructure
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

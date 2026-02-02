@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+# Sample ConfigMap for Tazama services
+# Copy and customize this for each service that needs configuration
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tazama-common-config
+  namespace: staging
+data:
+  # PostgreSQL Configuration
+  POSTGRES_HOST: "postgres-postgresql.infrastructure.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: "tazama"
+
+  # NATS Configuration
+  NATS_URL: "nats://nats.infrastructure.svc.cluster.local:4222"
+
+  # Application Configuration
+  NODE_ENV: "staging"
+  LOG_LEVEL: "info"
+
+  # Service Discovery
+  EVENT_DIRECTOR_URL: "http://event-director.staging.svc.cluster.local:8080"
+  TYPOLOGY_PROCESSOR_URL: "http://typology-processor.staging.svc.cluster.local:8080"
+  TADP_URL: "http://transaction-aggregation-decisioning-processor.staging.svc.cluster.local:8080"
+---
+# Sample Secret for sensitive configuration
+# NOTE: This is a template. In production, use SealedSecrets or external secret management
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tazama-common-secrets
+  namespace: staging
+type: Opaque
+stringData:
+  # PostgreSQL Credentials
+  POSTGRES_USER: "tazama_user"
+  POSTGRES_PASSWORD: "CHANGE_ME_IN_PRODUCTION"
+
+  # NATS Credentials (if authentication is enabled)
+  NATS_USER: "tazama"
+  NATS_PASSWORD: "CHANGE_ME_IN_PRODUCTION"

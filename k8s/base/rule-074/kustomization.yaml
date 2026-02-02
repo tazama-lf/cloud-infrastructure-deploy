@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: rule-074
+images:
+  - name: tazamaorg/rule-074
+    newTag: 3.0.0

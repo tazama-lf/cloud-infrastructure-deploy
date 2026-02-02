@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: auth-service
+images:
+  - name: tazamaorg/auth-service
+    newTag: 3.0.0

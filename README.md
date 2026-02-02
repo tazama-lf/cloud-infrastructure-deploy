@@ -1,14 +1,101 @@
 <!-- SPDX-License-Identifier: Apache-2.0 --> 
 
-# Still A Work In Progress
+# Tazama Cloud Infrastructure Deploy
 
-# Tazama Cloud Installation and Deployment Guide
+Automated deployment system for Tazama (Real-time Antifraud and Money Laundering Monitoring System) using Kubernetes, Terraform, Helm, ArgoCD, and GitOps principles.
 
-This is an end to end cloud setup guide for installing Tazama software (Real-time Antifraud and Money Laundering Monitoring System) in a production like environment using Kubernetes, Terraform, Helm, ArgoCD, Kustomize, gitops principles and officially published dockerhub images for the different Tazama compinents.
+## Quick Start
 
-It covers setup, dependency installation (via Helm), application management, and environment customization through Kustomize overlays.
+### One-Command Deployment
+
+```bash
+# 1. Clone repository
+git clone https://github.com/tazama-lf/cloud-infrastructure-deploy
+cd cloud-infrastructure-deploy
+
+# 2. Configure environment
+cp .env.sample .env
+# Edit .env with your AWS credentials
+
+# 3. Deploy everything
+make all
+```
+
+That's it! The automated system will:
+- ✅ Create EKS cluster with Terraform
+- ✅ Install ArgoCD
+- ✅ Deploy infrastructure (PostgreSQL, NATS, monitoring)
+- ✅ Deploy all 46 Tazama microservices
+
+**Deployment time:** ~20 minutes
 
 ---
+
+## Documentation
+
+- **[Quick Start & Deployment Guide](docs/DEPLOYMENT.md)** - Detailed deployment instructions
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Sealed Secrets Guide](k8s/sealed-secrets/README.md)** - Secret management
+
+---
+
+## Features
+
+### Automation Tools
+
+- **Makefile** - Idempotent deployment targets (`make all`, `make cluster`, etc.)
+- **Deployment Script** - Interactive bash script for step-by-step deployment
+- **Version Management** - Centralized version control for all services
+- **GitHub Actions** - Automated image updates via workflow
+- **Renovate Bot** - Automated dependency updates
+
+### Infrastructure as Code
+
+- **Terraform** - EKS cluster provisioning
+- **ArgoCD** - GitOps continuous delivery
+- **Kustomize** - Environment-specific configurations
+- **Helm** - Infrastructure dependency management
+- **Sealed Secrets** - Encrypted secrets in Git
+
+### Monitoring & Observability
+
+- **Prometheus & Grafana** - Metrics and dashboards
+- **NATS** - Message streaming
+- **PostgreSQL** - v3.0.0 database (replaces ArangoDB)
+- **Nginx Ingress** - Load balancing
+- **Keycloak** - Identity management (optional)
+
+---
+
+## Deployment Options
+
+### Option 1: Makefile (Recommended)
+
+```bash
+make all                    # Complete deployment
+make cluster               # Create cluster only
+make infrastructure        # Deploy infrastructure only
+make applications          # Deploy applications only
+make status                # Show deployment status
+make update-version VERSION=3.1.0  # Update all services
+make destroy               # Clean everything
+```
+
+### Option 2: Deployment Script
+
+```bash
+./scripts/deploy-tazama.sh                  # Full deployment
+./scripts/deploy-tazama.sh --skip-cluster  # Skip cluster creation
+./scripts/deploy-tazama.sh --dry-run       # Show what would happen
+```
+
+### Option 3: Manual Step-by-Step
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed manual instructions.
+
+---
+
+## 📋 Table of Contents
 
 - [Compatibility Matrix](#compatibility-matrix)
 - [Intended Users](#intended-users)
@@ -110,11 +197,13 @@ Before deploying Tazama apps, install the supporting infrastructure using Helm.
 | Dependency | Chart | Purpose |
 |-------------|--------|----------|
 | **NATS** | `nats/nats` | Messaging backbone |
-| **PostgreSQL** | `bitnami/postgresql` | Core transactional database |
+| **PostgreSQL** | `bitnami/postgresql` | Core transactional database (Required for v3.0.0+) |
 | **Keycloak** | `codecentric/keycloakx` | Identity & access management |
 | **NGINX Ingress** | `ingress-nginx/ingress-nginx` | Reverse proxy & routing |
 | **Prometheus & Grafana** | `prometheus-community/kube-prometheus-stack` | Metrics and dashboards |
 | **Elastic Stack (ELK)** | `elastic/helm-charts` | Centralized logging and observability |
+
+> **Important:** Tazama 3.0.0 uses PostgreSQL exclusively. ArangoDB (used in v2.2.0 and earlier) is no longer required.
 
 
 #### Add Helm Repositories
@@ -169,6 +258,55 @@ kubectl create secret generic db-creds \
   -n staging --dry-run=client -o yaml \
   | kubeseal --format=yaml > k8s/overlays/staging/sealed-db.yaml
 ```
+
+---
+
+### Step 4.5 - Configure ImagePullSecrets (If Required)
+
+The Tazama images are pulled from `tazamaorg` on Docker Hub. If these images are private or you encounter Docker Hub rate limits, you'll need to configure ImagePullSecrets.
+
+#### Check if ImagePullSecret is Needed
+
+Try pulling an image locally to test:
+```bash
+docker pull tazamaorg/rule-001:3.0.0
+```
+
+If the pull fails with authentication errors, follow these steps:
+
+#### Create Docker Registry Secret
+
+```bash
+# Create the staging namespace first
+kubectl create namespace staging
+
+# Create the secret
+kubectl create secret docker-registry tazama-dockerhub \
+  --docker-server=https://index.docker.io/v1/ \
+  --docker-username=<your-dockerhub-username> \
+  --docker-password=<your-dockerhub-token> \
+  --docker-email=<your-email> \
+  -n staging
+```
+
+#### Add ImagePullSecret to Deployments
+
+If you need to use the secret, add it to each overlay's kustomization file using a patch. For example:
+
+Create `k8s/overlays/staging/common-patches/imagepullsecret-patch.yaml`:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: tazama-dockerhub
+```
+
+Then reference it in each service's `kustomization.yaml`.
 
 ---
 
@@ -254,7 +392,9 @@ Now that Argo CD is installed and running, you can deploy the entire **Tazama Pl
 
 #### Overview: App-of-Apps Pattern
 
-The **App-of-Apps** pattern allows you to define one `root` Argo CD Application that automatically creates and manages all other microservice apps (`rule-001, rule-002, event-flow, etc.`). This will sync the services into the staging namespace and deploys images from `tazamaorg/*:2.2.0`
+The **App-of-Apps** pattern allows you to define one `root` Argo CD Application that automatically creates and manages all other microservice apps (`rule-001, rule-002, event-flow, etc.`). This will sync the services into the staging namespace and deploys images from `tazamaorg/*:3.0.0`
+
+> **Note:** Version 3.0.0 introduces PostgreSQL as the primary database, replacing ArangoDB used in earlier versions (2.2.0 and below).
 
 This setup ensures:
 - Consistent configuration across environments (staging, production).
@@ -309,18 +449,57 @@ kubectl get svc -n staging
 
 ### Step 7 - Updating & Syncing Services after New Releases
 
-When a new image is published (e.g. `tazamaorg/rule-001:3.0.0`);
+We provide **three automated methods** for updating service versions:
+
+#### Method 1: Update Script (Recommended for manual updates)
 
 ```bash
-# Update the image reference
-image: tazamaorg/rule-001:3.0.0
+# Update all services to new version
+./scripts/update-version.sh 3.1.0
 
-# Commit & push
-git commit -S -m "bump rule-001 to new release"
+# Review changes
+git diff
+
+# Commit and push
+git commit -am "chore: bump services to v3.1.0"
 git push
 
+# ArgoCD auto-syncs!
 ```
-> Argo CD detects the change and redeploys automatically.
+
+#### Method 2: Makefile
+
+```bash
+# One command to update all services
+make update-version VERSION=3.1.0
+
+# Then commit and push
+git commit -am "chore: bump to v3.1.0"
+git push
+```
+
+#### Method 3: GitHub Actions Workflow
+
+For automated PR creation:
+
+1. Go to **Actions** tab in GitHub
+2. Select **"Update Tazama Images"** workflow
+3. Click **"Run workflow"**
+4. Enter new version (e.g., `3.1.0`)
+5. Workflow creates PR automatically
+6. Review and merge PR
+7. ArgoCD syncs automatically
+
+#### Method 4: Renovate Bot (Fully Automated)
+
+Renovate automatically detects new image versions and creates PRs:
+
+- Configured in `.github/renovate.json`
+- Runs weekly by default
+- Groups updates by type
+- See [Renovate Documentation](https://docs.renovatebot.com/)
+
+> **Note:** All methods update the central `k8s/versions.yaml` file and all service kustomization files. ArgoCD detects Git changes and automatically redeploys.
 
 ---
 

@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: transaction-aggregation-decisioning-processor
+images:
+  - name: tazamaorg/tadp
+    newTag: 3.0.0

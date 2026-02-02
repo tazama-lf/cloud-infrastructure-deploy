@@ -5,3 +5,6 @@ resources:
   - service.yaml
 commonLabels:
   app: admin-service
+images:
+  - name: tazamaorg/admin-service
+    newTag: 3.0.0

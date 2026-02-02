@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Update Tazama Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: 'New Tazama version (e.g., 3.1.0)'
+        required: true
+        type: string
+      create_pr:
+        description: 'Create Pull Request (vs direct commit)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate version format
+        run: |
+          if ! [[ "${{ github.event.inputs.new_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format. Use X.Y.Z (e.g., 3.1.0)"
+            exit 1
+          fi
+
+      - name: Get current version
+        id: current
+        run: |
+          CURRENT_VERSION=$(grep "TAZAMA_VERSION:" k8s/versions.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Update versions.yaml
+        run: |
+          sed -i 's/TAZAMA_VERSION: "${{ steps.current.outputs.version }}"/TAZAMA_VERSION: "${{ github.event.inputs.new_version }}"/' k8s/versions.yaml
+
+      - name: Update kustomization files
+        run: |
+          # Update all kustomization files except demo-ui
+          find k8s/base -name "kustomization.yaml" \
+            ! -path "*/demo-ui/*" \
+            -exec sed -i "s/newTag: ${{ steps.current.outputs.version }}/newTag: ${{ github.event.inputs.new_version }}/" {} \;
+
+      - name: Count updated files
+        id: count
+        run: |
+          CHANGED=$(git diff --name-only | wc -l)
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Changed files: $CHANGED"
+
+      - name: Show changes
+        run: |
+          echo "::group::Changed files"
+          git diff --stat
+          echo "::endgroup::"
+
+      - name: Create Pull Request
+        if: ${{ github.event.inputs.create_pr == 'true' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "chore: bump Tazama images to v${{ github.event.inputs.new_version }}"
+          title: "Update Tazama images to v${{ github.event.inputs.new_version }}"
+          body: |
+            ## 🚀 Automated Image Version Update
+
+            This PR updates all Tazama service images to version **v${{ github.event.inputs.new_version }}**.
+
+            ### Changes
+            - Updated `k8s/versions.yaml`
+            - Updated ${{ steps.count.outputs.changed }} kustomization files
+            - Demo UI remains on `rc` tag
+
+            ### Impact
+            - **Previous version:** v${{ steps.current.outputs.version }}
+            - **New version:** v${{ github.event.inputs.new_version }}
+            - **Services affected:** 45 microservices
+
+            ### Testing
+            - [ ] Verify image exists on Docker Hub: `docker pull tazamaorg/rule-001:${{ github.event.inputs.new_version }}`
+            - [ ] Check ArgoCD sync after merge
+            - [ ] Monitor pod status in staging namespace
+
+            ### Deployment
+            Once merged, ArgoCD will automatically sync and deploy the new versions to all configured environments.
+
+            ---
+            🤖 Generated with [GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          branch: update-images-v${{ github.event.inputs.new_version }}
+          delete-branch: true
+          labels: |
+            automated
+            version-update
+          draft: false
+
+      - name: Direct commit
+        if: ${{ github.event.inputs.create_pr != 'true' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "chore: bump Tazama images to v${{ github.event.inputs.new_version }}"
+          git push
+
+      - name: Summary
+        run: |
+          echo "## ✅ Image Update Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.current.outputs.version }} → v${{ github.event.inputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Files updated:** ${{ steps.count.outputs.changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.create_pr }}" == "true" ]; then
+            echo "**Action:** Pull request created" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Action:** Changes committed directly" >> $GITHUB_STEP_SUMMARY
+          fi

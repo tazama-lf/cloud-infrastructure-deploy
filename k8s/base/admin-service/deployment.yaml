@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: admin-service
-  namespace: processor
   labels:
     app: admin-service
 spec:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: admin-service
-          image: tazamaorg/admin-service:2.2.0
+          image: tazamaorg/admin-service:3.0.0
           ports:
             - name: http
               containerPort: 3000
@@ -55,8 +54,6 @@ spec:
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
-      imagePullSecrets:
-        - name: frmpullsecret
       schedulerName: default-scheduler
       enableServiceLinks: false
   strategy:

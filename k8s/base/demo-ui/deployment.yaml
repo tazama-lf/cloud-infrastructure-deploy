@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: demo-ui
-  namespace: processor
   labels:
     app: demo-ui
 spec:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: demo-ui
-          image: tazamaorg/demo-ui:v2.2.0
+          image: tazamaorg/demo-ui:rc
           ports:
             - name: http
               containerPort: 3001
@@ -55,8 +54,6 @@ spec:
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
-      imagePullSecrets:
-        - name: frmpullsecret
       schedulerName: default-scheduler
       enableServiceLinks: false
   strategy:

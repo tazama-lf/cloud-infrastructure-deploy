@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Tazama Deployment Configuration
+# This file defines the deployment parameters for different environments
+
+environments:
+  staging:
+    namespace: staging
+    argocd:
+      autoSync: true
+      prune: true
+      selfHeal: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    replicas:
+      default: 1
+      critical:  # Services that need higher availability
+        - event-director
+        - event-flow
+        - typology-processor
+        - tadp
+    services:
+      enabled:
+        - postgresql
+        - nats
+        - monitoring
+        - nginx-ingress
+        - keycloak
+        - sealed-secrets
+
+  production:
+    namespace: production
+    argocd:
+      autoSync: false  # Manual sync for production
+      prune: false     # Don't auto-delete in production
+      selfHeal: true
+    resources:
+      limits:
+        cpu: "2000m"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    replicas:
+      default: 2
+      critical:  # Services that need higher availability
+        - event-director: 3
+        - event-flow: 3
+        - typology-processor: 3
+        - tadp: 3
+    services:
+      enabled:
+        - postgresql
+        - nats
+        - monitoring
+        - nginx-ingress
+        - keycloak
+        - sealed-secrets
+        - elastic  # Only in production
+
+infrastructure:
+  postgresql:
+    version: "13.4.0"
+    storage: "20Gi"
+    storageClass: ""  # Use default
+    backup:
+      enabled: true
+      schedule: "0 2 * * *"  # 2 AM daily
+
+  nats:
+    version: "1.1.5"
+    jetstream:
+      enabled: true
+      storage: "10Gi"
+
+  monitoring:
+    version: "55.5.0"
+    prometheus:
+      retention: "7d"
+      storage: "20Gi"
+    grafana:
+      storage: "10Gi"
+
+  keycloak:
+    version: "2.3.0"
+    replicas: 1
+
+  nginx-ingress:
+    version: "4.9.0"
+    replicas: 2
+    service:
+      type: "LoadBalancer"
+
+versions:
+  tazama: "3.0.0"
+  demo-ui: "rc"
